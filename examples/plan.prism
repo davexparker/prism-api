@@ -1,0 +1,15 @@
+dtmc
+
+const int MAX = 5;
+
+module plan
+
+s : [0..MAX] init 0;
+fail: bool init false;
+
+[] s<MAX & !fail -> 0.99:(s'=s+1) + 0.01:(fail'=true);
+[] s=MAX | fail -> true;
+
+endmodule
+
+label "goal" = s=5;
