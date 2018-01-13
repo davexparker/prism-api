@@ -1,0 +1,78 @@
+package ProbabilisticModel;
+
+import org.apache.commons.math3.linear.RealVector;
+
+//The PowerModel is capable of learning a linear relationship between displacements and energy expenditure.
+//Note however, it is not probabilistic.
+
+public class ProbabilisticWorkModel {
+
+
+    private int numParams;
+    private int paramSupportSize;
+    private double[][] modelParams;
+    private double[][] modelParamProbabilities;
+
+
+    public ProbabilisticWorkModel(){
+
+        numParams = 3;
+        paramSupportSize = 2;
+
+        modelParams = new double[numParams][paramSupportSize];
+        modelParamProbabilities = new double[numParams][paramSupportSize];
+
+        //Random distribution over parameters
+        for (int i = 0; i < numParams; i++) {
+            for (int j = 0; j < paramSupportSize; j++) {
+                modelParams[i][j] = Math.random()*5;
+                modelParamProbabilities[i][j] = 1/ paramSupportSize;
+            }
+        }
+    }
+
+
+
+    public int getParamSupportSize() {
+        return paramSupportSize;
+    }
+
+    public int getNumParams(){
+        return numParams;
+    }
+
+
+    public double getWork(int[] displacementVector,int[] offsets) {
+
+        double work = 0;
+
+        for (int i = 0; i < numParams; i++) {
+            work += Math.abs(modelParams[i][offsets[i]] * displacementVector[i]);
+        }
+        return work;
+    }
+
+    public double[] getProbabilities(int[] offsets){
+
+        double [] probabilities = new double[paramSupportSize];
+
+        for (int i = 0; i < probabilities.length; i++) {
+            probabilities[i] = modelParamProbabilities[i][offsets[i]];
+        }
+
+        return probabilities;
+    }
+
+    public static void main(String[] args){
+
+        ProbabilisticWorkModel pm = new ProbabilisticWorkModel();
+
+        int[] displacements = new int[]{10,100,20};
+
+        System.out.println(pm.getWork(displacements, new int[]{1,0,1}));
+
+    }
+
+
+
+}
