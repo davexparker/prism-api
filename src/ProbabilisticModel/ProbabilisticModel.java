@@ -4,9 +4,11 @@ import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 import parser.State;
 import parser.VarList;
 import parser.ast.Declaration;
+import parser.ast.DeclarationBool;
 import parser.ast.DeclarationInt;
 import parser.ast.Expression;
 import parser.type.Type;
+import parser.type.TypeBool;
 import parser.type.TypeInt;
 import prism.DefaultModelGenerator;
 import prism.ModelType;
@@ -41,8 +43,9 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         this.displacementVectors = new ArrayList<>();
         this.end = false;
 
-        for (int i = 0; i < missionWaypoints.size() - 1; i++) {
+//        this.exploreState = new State(1);
 
+        for (int i = 0; i < missionWaypoints.size() - 1; i++) {
             int[] displacement = new int[3];
             for (int j = 0; j < 3; j++) {
                 displacement[j] = missionWaypoints.get(i+1)[j] - missionWaypoints.get(i)[j];
@@ -55,14 +58,17 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
     @Override
     public State getInitialState() throws PrismException {
         //1 variable: index 0 -> battery_amount,
-        return new State(1).setValue(0,battery_amount);
+        return new State(3).setValue(0,battery_amount).setValue(1,end).setValue(2,waypointIndex);
     }
 
     @Override
     public void exploreState(State state) throws PrismException {
 
         this.exploreState = state;
+
         battery_amount = (Integer) exploreState.varValues[0];
+        end = (Boolean) exploreState.varValues[1];
+        waypointIndex = (Integer) exploreState.varValues[2];
 
     }
 
@@ -80,12 +86,12 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
     public int getNumTransitions(int i) throws PrismException {
 
         //When dead, we self-loop.
-        //When moving we have numParams^(paramSupportSize) different transitions.
+        //When moving we have paramSupportSize^(numParams) different transitions.
         if(end){
             return 1;
         }
         else {
-            return wm.getNumParams()^wm.getParamSupportSize();
+            return (int) Math.pow(wm.getParamSupportSize(),wm.getNumParams());
         }
     }
 
@@ -103,82 +109,75 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
     public double getTransitionProbability(int i, int offset) throws PrismException {
 
         //When dead, the state loops with prob. 1.0
-        //When moving, it takes the probability of the sum of the probability each coefficient of the model.
+        //When moving, each transition is the joint probability of each param. of the Work model.
 
         if(end){
             return 1.0;
         }
         else{
-            int numParams = wm.getNumParams();
-            int supportSize = wm.getParamSupportSize();
-
-            int[] offsets = new int[numParams];
-
-            for (int j = 0; j < offsets.length; j++) {
-                offsets[i] = Math.floorDiv((int) Math.sqrt(offset) , ((numParams-i)^supportSize));
-            }
+            int[] offsets = offsetHelper(offset);
 
             double jointProb = 1;
-
             for (double prob: wm.getProbabilities(offsets)) {
                 jointProb *= prob;
             }
-
             return jointProb;
         }
+    }
 
+    private int[] offsetHelper(int offset){
+        int numParams = wm.getNumParams();
+        int supportSize = wm.getParamSupportSize();
+        int[] offsets = new int[numParams];
+        int temp_offset = offset;
+
+        //change from base 10(offset) to base of the supportSize (assuming equal supportSize for each var.)
+        for (int j = 0; j < offsets.length; j++) {
+            offsets[j] = temp_offset % supportSize;
+            temp_offset = (int) ((double) temp_offset / (double) supportSize);
+        }
+
+        return offsets;
     }
 
     @Override
     public State computeTransitionTarget(int k, int offset) throws PrismException {
         State target = new State(exploreState);
 
-        // Integrate all functionality here for calculations, stop it from being messy.
         if(!end){
             System.out.println("not end");
+
             if(battery_amount< battery_threshold|| waypointIndex == displacementVectors.size()){
                 System.out.println("moving back");
 
-                    //vector addition of all waypoints reached to attain straight line from home to current position.
+                    //vector addition of all waypoints reached sofar to attain straight line from home to current position.
                     int[] returnDisplacement = new int[]{0,0,0};
                     for(int i = 0; i < waypointIndex; i++){
                         for (int j = 0; j< 3; j++){
                             returnDisplacement[j] += displacementVectors.get(i)[j];
                         }
                     }
-                    for (int i = 0; i < 3; i++) {
-                        // moving now in the reverse direction
-                        returnDisplacement[i] = -returnDisplacement[i];
-                        System.out.println("return_displ: "+returnDisplacement[i]);
-                    }
 
+                // moving now in the reverse direction towards home
+                for (int i = 0; i < 3; i++) { returnDisplacement[i] = -returnDisplacement[i]; }
 
-                    battery_amount -= wm.getWork(returnDisplacement, new int[]{0,0,0});
-
-                    end = true;
-
-                if (battery_amount < 0){
-                    battery_amount = -1;
-                }
-
-                System.out.println("Final battery amount: "+battery_amount);
-
-                return target.setValue(0, battery_amount);
+                int temp_battery_amount = (int) (battery_amount - wm.getWork(returnDisplacement, offsetHelper(offset)));
+                System.out.println("Final battery amountB: "+temp_battery_amount);
+                return target.setValue(0, (temp_battery_amount < 0 ? -1 : temp_battery_amount))
+                        .setValue(1,true);
             }
             else{
                 System.out.println("still forward");
+
                 // threshold not reached & waypoint not final
-                battery_amount -= wm.getWork(displacementVectors.get(waypointIndex), new int[]{0,0,0});
-                waypointIndex++;
+                int temp_battery_amount =  (int) (battery_amount - wm.getWork(displacementVectors.get(waypointIndex), offsetHelper(offset)));
+                System.out.println("battery_amount: "+temp_battery_amount);
 
-                System.out.println("battery_amount: "+battery_amount);
+                if (temp_battery_amount < 0){System.out.println("Final battery amountA: "+battery_amount); }
 
-
-                if (battery_amount < 0){
-                    end=true;
-                    battery_amount = -1;
-                }
-                return target.setValue(0,battery_amount);
+                return target.setValue(0, (temp_battery_amount < 0 ? -1 : temp_battery_amount))
+                        .setValue(1,temp_battery_amount < 0)
+                        .setValue(2,waypointIndex + 1);
             }
         }
         else {
@@ -199,12 +198,12 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
 
     @Override
     public List<String> getVarNames() {
-        return Arrays.asList("battery_amount");
+        return Arrays.asList("battery_amount","end","waypointIndex");
     }
 
     @Override
     public List<Type> getVarTypes() {
-        return Arrays.asList(TypeInt.getInstance());
+        return Arrays.asList(TypeInt.getInstance(), TypeBool.getInstance());
     }
 
     @Override
@@ -212,6 +211,8 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         VarList varList = new VarList();
         try {
             varList.addVar(new Declaration("battery_amount", new DeclarationInt(Expression.Int(-1), Expression.Int(battery_size))), 0, null);
+            varList.addVar(new Declaration("end", new DeclarationBool()), 0, null);
+            varList.addVar(new Declaration("waypointIndex", new DeclarationInt(Expression.Int(0), Expression.Int(displacementVectors.size()))), 0, null);
         } catch (PrismLangException e) {
         }
         return varList;

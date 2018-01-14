@@ -24,7 +24,7 @@ public class ProbabilisticModelApp {
                 missionWaypoints.add(new int[]{20,20,-25});
                 missionWaypoints.add(new int[]{36,36,-40});
 
-                ProbabilisticModel prismModel = new ProbabilisticModel(100,0.1, missionWaypoints);
+                ProbabilisticModel prismModel = new ProbabilisticModel(500,0.5, missionWaypoints);
 
                 prism.loadModelGenerator(prismModel);
                 prism.exportTransToFile(true, Prism.EXPORT_DOT_STATES, new File("dtmc.dot"));

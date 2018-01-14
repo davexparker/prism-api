@@ -17,7 +17,7 @@ public class ProbabilisticWorkModel {
     public ProbabilisticWorkModel(){
 
         numParams = 3;
-        paramSupportSize = 2;
+        paramSupportSize = 3;
 
         modelParams = new double[numParams][paramSupportSize];
         modelParamProbabilities = new double[numParams][paramSupportSize];
@@ -26,7 +26,7 @@ public class ProbabilisticWorkModel {
         for (int i = 0; i < numParams; i++) {
             for (int j = 0; j < paramSupportSize; j++) {
                 modelParams[i][j] = Math.random()*5;
-                modelParamProbabilities[i][j] = 1/ paramSupportSize;
+                modelParamProbabilities[i][j] = 1.0 / paramSupportSize;
             }
         }
     }
@@ -54,7 +54,7 @@ public class ProbabilisticWorkModel {
 
     public double[] getProbabilities(int[] offsets){
 
-        double [] probabilities = new double[paramSupportSize];
+        double [] probabilities = new double[numParams];
 
         for (int i = 0; i < probabilities.length; i++) {
             probabilities[i] = modelParamProbabilities[i][offsets[i]];
@@ -69,7 +69,20 @@ public class ProbabilisticWorkModel {
 
         int[] displacements = new int[]{10,100,20};
 
-        System.out.println(pm.getWork(displacements, new int[]{1,0,1}));
+        System.out.println(pm.getWork(displacements, new int[]{0,0,0}));
+        System.out.println(pm.getWork(displacements, new int[]{0,0,1}));
+        System.out.println(pm.getWork(displacements, new int[]{1,0,0}));
+        System.out.println(pm.getWork(displacements, new int[]{0,1,0}));
+
+
+
+        for (int i = 0; i < pm.getNumParams(); i++) {
+            for (int j = 0; j < pm.getParamSupportSize(); j++) {
+                System.out.println("params vals: "+ pm.modelParams[i][j]);
+                System.out.println("params probs: "+ pm.modelParamProbabilities[i][j]);
+            }
+        }
+
 
     }
 
