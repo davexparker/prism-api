@@ -1,4 +1,4 @@
-package ProbabilisticModel;
+package ProbabilisticModel2;
 
 import parser.State;
 import parser.VarList;
@@ -18,29 +18,33 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ProbabilisticModel  extends DefaultModelGenerator {
+//learns power instead of work
 
+public class ProbabilisticModel2 extends DefaultModelGenerator {
 
-    private int battery_amount;
-    private int battery_size;
+    private int batterySize;
+    private int speed;   //0 < speed < Inf
+
+    private int batteryAmount;
     private int waypointIndex;
-    private double battery_threshold;
+    private double batteryThreshold;
     private List<int[]> displacementVectors;
-    private ProbabilisticWorkModel wm = new ProbabilisticWorkModel ();
+    private ProbabilisticPowerModel wm = new ProbabilisticPowerModel();
 
     //current state to be explored.
     private State exploreState;
     private boolean end;
 
 
-    public ProbabilisticModel(int battery_amount, double threshold_percent, List<int[]> missionWaypoints){
+    public ProbabilisticModel2(int batteryAmount, double threshold_percent, List<int[]> missionWaypoints, int speed){
 
-        this.battery_size = battery_amount;
-        this.battery_amount = battery_amount;
+        this.batterySize = batteryAmount;
+        this.batteryAmount = batteryAmount;
         this.waypointIndex = 0;
-        this.battery_threshold = threshold_percent*battery_amount;
+        this.batteryThreshold = threshold_percent*batteryAmount;
         this.displacementVectors = new ArrayList<>();
         this.end = false;
+        this.speed = speed;
 
 //        this.exploreState = new State(1);
 
@@ -53,10 +57,9 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         }
     }
 
-
     @Override
     public State getInitialState() throws PrismException {
-        return new State(3).setValue(0,battery_amount).setValue(1,end).setValue(2,waypointIndex);
+        return new State(3).setValue(0, batteryAmount).setValue(1,end).setValue(2,waypointIndex);
     }
 
     @Override
@@ -64,10 +67,9 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
 
         this.exploreState = state;
 
-        battery_amount = (Integer) exploreState.varValues[0];
+        batteryAmount = (Integer) exploreState.varValues[0];
         end = (Boolean) exploreState.varValues[1];
         waypointIndex = (Integer) exploreState.varValues[2];
-
     }
 
     @Override
@@ -127,9 +129,9 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         int numParams = wm.getNumParams();
         int supportSize = wm.getParamSupportSize();
         int[] offsets = new int[numParams];
-        int temp_offset = offset;
 
         //change from base 10(offset) to base of the supportSize (assuming equal supportSize for each var.)
+        int temp_offset = offset;
         for (int j = 0; j < offsets.length; j++) {
             offsets[j] = temp_offset % supportSize;
             temp_offset = (int) ((double) temp_offset / (double) supportSize);
@@ -145,7 +147,7 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         if(!end){
             System.out.println("not end");
 
-            if(battery_amount< battery_threshold|| waypointIndex == displacementVectors.size()){
+            if(batteryAmount < batteryThreshold || waypointIndex == displacementVectors.size()){
                 System.out.println("moving back");
 
                     //vector addition of all waypoints reached sofar to attain straight line from home to current position.
@@ -159,7 +161,7 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
                 // moving now in the reverse direction towards home
                 for (int i = 0; i < 3; i++) { returnDisplacement[i] = -returnDisplacement[i]; }
 
-                int temp_battery_amount = (int) (battery_amount - wm.getWork(returnDisplacement, offsetHelper(offset)));
+                int temp_battery_amount = (int) (batteryAmount - wm.getWork(returnDisplacement, speed, offsetHelper(offset)));
                 System.out.println("Final battery amountB: "+temp_battery_amount);
                 return target.setValue(0, (temp_battery_amount < 0 ? -1 : temp_battery_amount))
                         .setValue(1,true);
@@ -168,10 +170,10 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
                 System.out.println("still forward");
 
                 // threshold not reached & waypoint not final
-                int temp_battery_amount =  (int) (battery_amount - wm.getWork(displacementVectors.get(waypointIndex), offsetHelper(offset)));
-                System.out.println("battery_amount: "+temp_battery_amount);
+                int temp_battery_amount =  (int) (batteryAmount - wm.getWork(displacementVectors.get(waypointIndex), speed, offsetHelper(offset)));
+                System.out.println("batteryAmount: "+temp_battery_amount);
 
-                if (temp_battery_amount < 0){System.out.println("Final battery amountA: "+battery_amount); }
+                if (temp_battery_amount < 0){System.out.println("Final battery amountA: "+ batteryAmount); }
 
                 return target.setValue(0, (temp_battery_amount < 0 ? -1 : temp_battery_amount))
                         .setValue(1,temp_battery_amount < 0)
@@ -196,7 +198,7 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
 
     @Override
     public List<String> getVarNames() {
-        return Arrays.asList("battery_amount","end","waypointIndex");
+        return Arrays.asList("batteryAmount","end","waypointIndex");
     }
 
     @Override
@@ -208,7 +210,7 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
     public VarList createVarList() throws PrismException {
         VarList varList = new VarList();
         try {
-            varList.addVar(new Declaration("battery_amount", new DeclarationInt(Expression.Int(-1), Expression.Int(battery_size))), 0, null);
+            varList.addVar(new Declaration("batteryAmount", new DeclarationInt(Expression.Int(-1), Expression.Int(batterySize))), 0, null);
             varList.addVar(new Declaration("end", new DeclarationBool()), 0, null);
             varList.addVar(new Declaration("waypointIndex", new DeclarationInt(Expression.Int(0), Expression.Int(displacementVectors.size()))), 0, null);
         } catch (PrismLangException e) {
@@ -234,7 +236,7 @@ public class ProbabilisticModel  extends DefaultModelGenerator {
         switch (i) {
             // "home"
             case 0:
-                return (battery_amount >= 0 & end);
+                return (batteryAmount >= 0 & end);
         }
         // Should never happen
         return false;

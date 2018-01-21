@@ -3,7 +3,7 @@ package basicModel;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
-//The PowerModel is capable of learning a linear relationship between displacements and energy expenditure.
+//The WorkModel is for learning a linear relationship between displacements and work.
 //Note however, it is not probabilistic.
 
 public class BasicWorkModel {

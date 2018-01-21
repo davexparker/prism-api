@@ -1,9 +1,7 @@
 package ProbabilisticModel;
 
-import org.apache.commons.math3.linear.RealVector;
-
-//The PowerModel is capable of learning a linear relationship between displacements and energy expenditure.
-//Note however, it is not probabilistic.
+//The WorkModel is for learning a linear relationship between (position) displacements and work.
+//This one IS probabilistic.
 
 public class ProbabilisticWorkModel {
 
@@ -76,13 +74,13 @@ public class ProbabilisticWorkModel {
 
 
 
-        for (int i = 0; i < pm.getNumParams(); i++) {
-            for (int j = 0; j < pm.getParamSupportSize(); j++) {
-                System.out.println("params vals: "+ pm.modelParams[i][j]);
-                System.out.println("params probs: "+ pm.modelParamProbabilities[i][j]);
-            }
-        }
-
+//        for (int i = 0; i < pm.getNumParams(); i++) {
+//            for (int j = 0; j < pm.getParamSupportSize(); j++) {
+//                System.out.println("params vals: "+ pm.modelParams[i][j]);
+//                System.out.println("params probs: "+ pm.modelParamProbabilities[i][j]);
+//            }
+//        }
+//
 
     }
 
