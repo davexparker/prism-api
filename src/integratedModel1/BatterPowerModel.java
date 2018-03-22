@@ -13,6 +13,12 @@ abstract class BatterPowerModel {
 
         System.out.println("Printing calculations...");
 
+        for (int i = 0; i < EFECdisplacement.length; i++) {
+            System.out.print("- displacement"+i+": " + EFECdisplacement[i]+ "; ");
+        }
+        System.out.println();
+
+
         double[] velocity = speedToENUVelocity(EFECdisplacement, speed);
         for (int i = 0; i < velocity.length; i++) {
             System.out.print("- velocity"+i+": " + velocity[i]+ "; ");

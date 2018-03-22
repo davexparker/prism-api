@@ -36,12 +36,10 @@ public class LinearProbPowerModel extends BatterPowerModel {
         System.out.println("\n");
     }
 
-    //todo
     public void learnBatch(double[][] ENUvelocityData, double[] powerData)  {
         //left blank for now
     }
 
-    //todo
     public void update(double[][] ENUvelocityData, double[] powerData){
         //left blank for now
     }
