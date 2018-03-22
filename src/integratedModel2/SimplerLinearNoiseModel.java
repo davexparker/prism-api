@@ -40,6 +40,11 @@ public class SimplerLinearNoiseModel extends BatterPowerModel {
             System.out.print("noise_"+i+ ": " +noiseDistribution[i]+". ");
         }
         System.out.println("\n");
+        System.out.println("\nPrinting noise probabilities...");
+        for (int i = 0; i < this.noiseSize; i++) {
+            System.out.print("noise_"+i+ ": " +noiseProbabilities[i]+". ");
+        }
+        System.out.println("\n");
     }
 
     public void learnBatch(double[][] ENUvelocityData, double[] powerData)  {
@@ -71,9 +76,7 @@ public class SimplerLinearNoiseModel extends BatterPowerModel {
 
     //todo check
     public double[] getProbabilities(int[] offsets){
-        double [] probabilities = new double[numParams];
-        for (int i = 0; i < probabilities.length; i++) probabilities[i] = noiseProbabilities[offsets[0]];
-        return probabilities;
+        return new double[]{noiseProbabilities[offsets[0]]};
     }
 
 

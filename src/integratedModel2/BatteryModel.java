@@ -144,8 +144,10 @@ public class BatteryModel extends DefaultModelGenerator {
 
             double jointProb = 1;
             for (double prob: wm.getProbabilities(offsets)) {
+//                System.out.println("prob: " + prob);
                 jointProb *= prob;
             }
+
             return jointProb;
         }
     }
@@ -192,7 +194,7 @@ public class BatteryModel extends DefaultModelGenerator {
                 for (int i = 0; i < returnDisplacement.length; i++) { returnDisplacement[i] = -returnDisplacement[i]; }
 
                 System.out.println("DEPLETING BATTERY: Current battery level: " + batteryAmount + " wattHrs");
-                int temp_battery_amount = (int) (batteryAmount - wm.getWork(returnDisplacement, speed, offsetHelper(offset)));
+                int temp_battery_amount = (int) (batteryAmount - wm.getWork(returnDisplacement, speed, new int[]{offset}));
                 System.out.println("DEPLETING BATTERY: Remaining battery level after displacement: " + temp_battery_amount  + " wattHrs \n");
 
 
@@ -204,7 +206,7 @@ public class BatteryModel extends DefaultModelGenerator {
 
                 // threshold not reached & waypoint not final
                 System.out.println("DEPLETING BATTERY: Current battery level: " + batteryAmount  + " wattHrs");
-                int temp_battery_amount =  (int) (batteryAmount - wm.getWork(displacementVectors.get(waypointIndex), speed, offsetHelper(offset)));
+                int temp_battery_amount =  (int) (batteryAmount - wm.getWork(displacementVectors.get(waypointIndex), speed, new int[]{offset}));
 
                 System.out.println("DEPLETING BATTERY: Remaining battery level after displacement: " + temp_battery_amount  + " wattHrs \n");
 
